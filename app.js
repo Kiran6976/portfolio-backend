@@ -12,6 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
+app.get("/", (req, res) => {
+  res.send("Portfolio Backend API Running");
+});
+
 app.use("/api", require("./routes/portfolioRoutes"));
 
 const PORT = process.env.PORT || 5000;
