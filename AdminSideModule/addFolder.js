@@ -1,5 +1,6 @@
 const Folder = require("../Model/Folder");
 const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
 
 module.exports = async (req, res) => {
   try {
@@ -9,21 +10,30 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "Image file is required" });
     }
 
-    const result = await cloudinary.uploader.upload_stream(
-      { folder: "portfolio" },
-      async (error, result) => {
-        if (error) return res.status(500).json({ error: error.message });
+    const uploadFromBuffer = () =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "portfolio" },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
 
-        const folder = await Folder.create({
-          name,
-          coverImage: result.secure_url,
-        });
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
 
-        res.json(folder);
-      }
-    ).end(req.file.buffer);
+    const result = await uploadFromBuffer();
+
+    const folder = await Folder.create({
+      name,
+      coverImage: result.secure_url,
+    });
+
+    res.json(folder);
 
   } catch (err) {
+    console.error("Add folder error:", err);
     res.status(500).json({ error: err.message });
   }
 };

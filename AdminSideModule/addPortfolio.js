@@ -1,6 +1,6 @@
 const Portfolio = require("../Model/Portfolio");
 const cloudinary = require("../config/cloudinary");
-const fs = require("fs");
+const streamifier = require("streamifier");
 
 module.exports = async (req, res) => {
   try {
@@ -10,8 +10,20 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "Image required" });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path);
-    fs.unlinkSync(req.file.path);
+    const uploadFromBuffer = () =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "portfolio" },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+
+    const result = await uploadFromBuffer();
 
     const newItem = await Portfolio.create({
       title,
@@ -21,7 +33,9 @@ module.exports = async (req, res) => {
     });
 
     res.json(newItem);
+
   } catch (error) {
+    console.error("Add portfolio error:", error);
     res.status(500).json({ error: error.message });
   }
 };
