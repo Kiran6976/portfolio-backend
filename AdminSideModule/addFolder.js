@@ -1,20 +1,28 @@
 const Folder = require("../Model/Folder");
 const cloudinary = require("../config/cloudinary");
-const fs = require("fs");
 
 module.exports = async (req, res) => {
   try {
     const { name } = req.body;
 
-    const result = await cloudinary.uploader.upload(req.file.path);
-    fs.unlinkSync(req.file.path);
+    if (!req.file) {
+      return res.status(400).json({ error: "Image file is required" });
+    }
 
-    const folder = await Folder.create({
-      name,
-      coverImage: result.secure_url,
-    });
+    const result = await cloudinary.uploader.upload_stream(
+      { folder: "portfolio" },
+      async (error, result) => {
+        if (error) return res.status(500).json({ error: error.message });
 
-    res.json(folder);
+        const folder = await Folder.create({
+          name,
+          coverImage: result.secure_url,
+        });
+
+        res.json(folder);
+      }
+    ).end(req.file.buffer);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
