@@ -34,10 +34,7 @@ router.post("/admin/login", loginAdmin);
 router.put("/admin/messages/read/:id", auth, markAsRead);
 router.delete("/admin/messages/:id", auth, deleteMessage);
 router.post("/admin/add-folder", auth, upload.single("image"), addFolder);
-router.get("/folders", async (req,res)=>{
-  const data = await Folder.find();
-  res.json(data);
-});
+
 router.put(
   "/admin/folder/:id",
   auth,
