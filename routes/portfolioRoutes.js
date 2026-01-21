@@ -17,6 +17,8 @@ const addFolder = require("../AdminSideModule/addFolder");
 const Folder = require("../Model/Folder");
 const getFolders = require("../AdminSideModule/getFolders");
 const deleteFolder = require("../AdminSideModule/deleteFolder");
+const updateFolder = require("../AdminSideModule/updateFolder");
+
 
 const auth = require("../Middleware/auth");
 const upload = require("../Middleware/upload");
@@ -36,6 +38,13 @@ router.get("/folders", async (req,res)=>{
   const data = await Folder.find();
   res.json(data);
 });
+router.put(
+  "/admin/folder/:id",
+  auth,
+  upload.single("image"),
+  updateFolder
+);
+
 router.get("/folders", getFolders);
 router.delete("/admin/folder/:id", auth, deleteFolder);
 
