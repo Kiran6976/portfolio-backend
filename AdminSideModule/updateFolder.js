@@ -1,16 +1,16 @@
 const Folder = require("../Model/Folder");
-const cloudinary = require("../config/cloudinary");
 
 module.exports = async (req, res) => {
   try {
     const { name } = req.body;
     const folderId = req.params.id;
 
-    let updateData = { name };
+    let updateData = {};
+
+    if (name) updateData.name = name;
 
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path);
-      updateData.coverImage = result.secure_url;
+      updateData.coverImage = req.file.path; // already cloudinary url
     }
 
     const updated = await Folder.findByIdAndUpdate(
@@ -20,7 +20,9 @@ module.exports = async (req, res) => {
     );
 
     res.json(updated);
+
   } catch (err) {
+    console.error("Update folder error:", err);
     res.status(500).json({ error: err.message });
   }
 };
